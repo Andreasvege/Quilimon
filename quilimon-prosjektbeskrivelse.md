@@ -2,7 +2,7 @@
 
 ## Bakgrunn og formål
 
-Quilimon er et hjemmelaget, Pokémon-inspirert kortspill skapt av min fetter Jakob da vi var barn. Han tegnet alle monstrene og kortene for hånd og fant opp reglene selv. Dette prosjektet er en digital gjenskapning av spillet, laget som bursdagsgave til Jakob og som noe hele familien som spilte det kan samles om. Det skal deles som en nettlenke uten installasjon, og de originale håndtegnede kortene skal skannes og brukes som kortgrafikk, slik at spillet beholder det håndlagde uttrykket.
+Quilimon er et hjemmelaget, Pokémon-inspirert kortspill skapt av min fetter Jakob da vi var barn. Han tegnet alle monstrene og kortene for hånd og fant opp reglene selv. Dette prosjektet er en digital gjenskapning av spillet, laget som bursdagsgave til Jakob og som noe hele familien som spilte det kan samles om. De originale håndtegnede kortene skal skannes og brukes som kortgrafikk, slik at spillet beholder det håndlagde uttrykket.
 
 ## Spillkonsept
 

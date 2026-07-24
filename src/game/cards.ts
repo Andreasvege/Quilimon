@@ -1,9 +1,10 @@
-interface Cards {
+export interface Card {
     name: string;
+    id: string;
     description: string;
     image: string;
-    type: string;
+    type: "dark" | "fire" | "fighting" | "grass" | "water" | "rock";
     hp: number;
-    attacks: Attack[];
+    attackIds: string[];
     evolution: string | null;
 }
