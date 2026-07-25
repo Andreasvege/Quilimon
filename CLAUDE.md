@@ -35,6 +35,95 @@ Full prosjektbeskrivelse: [quilimon-prosjektbeskrivelse.md](quilimon-prosjektbes
 
 **Utenfor v1:** AI-motstander, online multiplayer, evolusjon, deck-bygging, energikostnader.
 
+## Kortfakta (avlest fra originalfotoene i `src/assets/Original/`)
+
+Alle 14 handlingene på de 7 kortene. Terningkrav mangler — se Åpne designspørsmål.
+
+| Kort | HP | Korttype | Handling | Skade | Effekt |
+|---|---|---|---|---|---|
+| Slepio (= Sleepius) | 200 | mørk/psykisk | Mind Infuse | 40 | «og lar deg angripe igjen» |
+| | | | Grip | – | «vinner runden og stjeler kort til din bunke» |
+| Magmo | 100 | ild | Magma Smoke | – | «blind's the enemy for one round» |
+| | | | Fireball | 70 | – |
+| Magecko | 60 | kamp | *(uten navn)* | – | «neste angrep på Magecko tar 40 mindre skade og sender 20 tilbake» |
+| | | | Reflekt `SPESS` | – | «sender tilbake angrepet» |
+| Atcool | 50 | stein | Rock Kick | 30 | – |
+| | | | *(uten navn)* `SPESS` | 10 × terningverdi | – |
+| Shag | 40 | ild | Scratch | 20 | – |
+| | | | Inflame `SPESS` | 40 | – |
+| Mush | 30 | gress | Charge | 20 | – |
+| | | | Pollen `SPESS` | – | «motstanderen må rulle 6 neste runde for å angripe» |
+| Plune | 30 | vann | Bubbles | 20 | – |
+| | | | Spectral Beem `SPESS` | 60 | – |
+
+Evolusjonslinje står kun på tre kort: Mush→Lumpbeard, Shag→Infireo, Plune→Pawlune. De fire
+andre har Quilimon-logoen i samme felt — altså ingen evolusjon. Bekrefter `evolution: string | null`.
+
+**Observasjoner som treffer datamodellen:**
+
+1. **Terningkrav er notert på to måter.** Fem kort bruker intervall (`A: [terning]–[terning]`,
+   fra–til). Slepio og Magmo lister i stedet opp enkeltterninger (Magmos Fireball har en rad på
+   fem ikoner). `diceCost: number[]` dekker begge, siden et intervall bare er et utlistet sett.
+2. **Skade er ikke obligatorisk.** 5 av 14 handlinger gjør ingen skade — de er ren effekt.
+3. **Én skade er beregnet, ikke fast:** Atcools SPESS er «10 × the dice number». Kan ikke stå
+   som et tall i datafilen; skade må kunne være enten et tall eller en regel.
+4. **«A:» er ikke alltid et angrep.** Mageckos første handling legger en forsvarsbuff på Magecko
+   selv — samme felt og terningkrav, motsatt retning. Vurder et mer nøytralt navn enn `Attack`.
+5. **Typen hører hjemme på angrepet, ikke bare på kortet.** Fireball er et ildangrep og Spectral
+   Beem et vannangrep, mens Charge og Scratch er nøytrale og aldri får elementbonus. Noen angrep
+   har altså *ingen* type — en egen tilstand, ikke en av elementene. Merk at typematchen krever
+   oppslag på **begge** sider: angrepets type på angripersiden (kan ikke leses av angriperens
+   `Card.type`, siden Magmo har både et ild- og et nøytralt angrep), og forsvarerens `Card.type`
+   på mottakersiden — nådd via `InBattle` → `Card`. Har angrepet ingen type, hoppes hele
+   oppslaget over.
+6. **`SPESS` = «special attack».** Faller i praksis sammen med «angrepet har en type», så det
+   trengs neppe som eget felt. Ignoreres inntil videre.
+
+**Beslutninger:**
+
+- Kortenes «10+ [typesymbol]»-felt (Shag, Plune, Atcool) betyr at kortet gjør **10 ekstra skade
+  mot** de listede typene — ikke at det tar ekstra. Feltet ignoreres i v1; et ordentlig
+  type-styrke/svakhet-system bygges senere som eget system.
+- Konsekvens for effektsystemet: en typematch er en funksjon av **to** monstre, så
+  skadeberegnings-kroken må kunne se både angriper og forsvarer — ikke bare skaden og målet.
+  Ta høyde for det nå, selv om selve mekanikken utsettes.
+- **Effekter løses med et register av funksjoner, ikke som ren data-union.** Kortdataene peker på
+  en effekt via streng-ID (samme fremmednøkkel-mønster som `attackIds`), og et eget register slår
+  opp en liten funksjon per effekt. Valgt fordi det matcher arkitekturkravet «ny dataoppføring +
+  evt. en liten effektfunksjon», og fordi effekter som Grip (roter i bunkene) og Magecko A (gjør
+  to ting samtidig) ikke lar seg presse inn i en fast tagg-union. `BurnEffect`/`PoisonEffect` var
+  plassholdere uten grunnlag i kortene og skal bort.
+
+**Konsekvenser av registervalget — ta høyde for disse fra start:**
+
+1. **Registeret fjerner ikke behovet for statuser.** Fire av seks effekter er *utsatte*: funksjonen
+   som kjøres ved angrep påfører bare noe, mens virkningen inntreffer senere ved en krok. Statusen
+   må finnes som data i spilltilstanden (for nedtelling, serialisering, UI); funksjonen er det
+   statusen *gjør*. Det gir to slags funksjoner: én ved utførelse, én per krok.
+2. **Effektfunksjoner trenger kontekst, ikke bare tilstand:** angriper, mål, terningkast og hvilket
+   angrep som ble brukt — ellers kan ikke samme funksjon gjenbrukes på tvers av kort. De må
+   returnere hendelser i tillegg til ny tilstand.
+3. **Kroker må kunne svare med mer enn ett tall.** Reflekt avbryter et innkommende angrep og snur
+   det; Magecko A både reduserer innkommende skade (−40) og påfører skade motsatt vei (20). Designes
+   kroken som «returner justert skade», fungerer alt unntatt disse to — og det oppdages først sent.
+   Svaret må kunne være «avbryt og erstatt».
+4. **Streng-ID-er gir kjøretidsfeil, ikke kompileringsfeil**, hvis en ID mangler i registeret. Bevisst
+   bytte av kompilator-trygghet mot fleksibilitet.
+
+**Effektoversikt (hvilken krok hver effekt hører hjemme i):**
+
+| Effekt | Når | Krok | Inngrep |
+|---|---|---|---|
+| Mind Infuse | umiddelbar | – | gir en ekstra handling (bryter turflyt) |
+| Grip | umiddelbar | – | flytter kort mellom bunker |
+| Magma Smoke | utsatt | før angrep | blokkerer angrepet helt |
+| Pollen | utsatt | før angrep | endrer terningkravet |
+| Magecko A | utsatt | ved skadeberegning | −40 skade **og** 20 tilbake til angriper |
+| Reflekt | utsatt | før angrep treffer | omdirigerer hele angrepet |
+
+**Varighet måles ikke likt:** Magma Smoke og Pollen varer i *runder*, mens Magecko A varer til
+«neste angrep» — altså et antall bruk, ikke runder. Varighet må kunne uttrykkes på begge måter.
+
 ## Status (per nå)
 
 - Prosjektoppsett (Vite/React/TS) på plass, 7 kort skannet og croppet. `npm install` er kjørt (`node_modules` finnes), `npx tsc --noEmit -p tsconfig.app.json` fungerer for typesjekk.
@@ -55,7 +144,12 @@ Full prosjektbeskrivelse: [quilimon-prosjektbeskrivelse.md](quilimon-prosjektbes
 
 ## Åpne designspørsmål (avklares mot de fysiske kortene)
 
-- Eksakte terningkrav per angrep (noen utydelige på skanningene)
+- **Eksakte terningkrav per angrep for alle 14 handlingene.** Terningprikkene lar seg ikke lese
+  sikkert fra fotoene (4/5/6 er ikke til å skille fra hverandre), og det er nettopp de høye
+  verdiene som går igjen. Må leses av på de fysiske kortene.
+- Magecko og Atcool har hver sin handling uten navn — hadde de navn?
+- Slepio og Magmo mangler `SPESS`-merket som de fem andre har. Bevisst? (Slepio er merket «v.0»
+  og er kanskje tegnet først.)
 - Om aktivt monster byttes fritt eller kun når ett beseires
 - Hva som skjer ved terningkast som ikke matcher noe angrep
 - Presis tolkning av "Grip – vinner runden og stjeler kort"
