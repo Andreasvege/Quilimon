@@ -1,27 +1,14 @@
-import type { Card } from './cards'
-
 export interface Attack {
     name: string;
     description: string;
-    damage: number;
+    damage?: number;
     diceCost: number[];
     id: string;
-    effect?: "burn" | "poison";
+    effect?: string;
+    type: "normal" | "dark" | "fire" | "fighting" | "grass" | "water" | "rock";
 }
 
-export interface BurnEffect {
-    type: "burn";
-    damagePerTurn: number;
-    turnsRemaining: number;
-}
 
-export interface PoisonEffect {
-    type: "poison";
-    damagePerTurn: number;
-    turnsRemaining: number;
-}
-
-export type effect = BurnEffect | PoisonEffect;
 
 /*
 function applyStatusEffect(target: Card, effect: StatusEffect): void {
