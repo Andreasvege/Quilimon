@@ -1,25 +1,29 @@
-import type { Card } from "./cards";
-import { Card } from './cards';
-
 export interface GameState {
-    players: Player[];
-    currentPlayerIndex: number;
+    players: [Player, Player];
+    currentPlayerIndex: 0 | 1;
     lastRoll: number | null;
-    deck: Card[];
+    deck: string[];
 }
 
 export interface Player {
     id: number;
     name: string;
-    hand: Card[];
-    bench: Card[];
+    activeIndex: number;
+    graveyard: string[];
+    team: InBattle[]
 }
 
 export interface InBattle {
-    quilimonId : number;
+    cardId : string;
     currentHp : number;
     statusEffects : StatusEffect[];
     damageMultiplier : number;
 
 
+}
+
+export interface StatusEffect {
+    effectId: string;
+    remaining: number;
+    durationType: "rounds" | "uses";
 }

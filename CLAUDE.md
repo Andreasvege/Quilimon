@@ -27,13 +27,39 @@ Full prosjektbeskrivelse: [quilimon-prosjektbeskrivelse.md](quilimon-prosjektbes
 
 ## Versjon 1 (omfang)
 
-- To spillere, hot seat (samme skjerm), fem kort hver
+- To spillere, hot seat (samme skjerm), **tre kort hver** (endret fra fem — se Spillregler)
 - Terningkast (D6), angrep, skade, statuseffekter, seier/tap
-- Ett aktivt monster + benk per spiller
+- Ett aktivt monster + resten av laget per spiller
 - Startsett = de 7 kortene: Sleepius (200 HP), Magmo (100), Magecko (60), Atcool (50), Shag (40), Mush (30), Plune (30)
 - Polerte, "juicy" animasjoner (Hearthstone-følelse)
 
 **Utenfor v1:** AI-motstander, online multiplayer, evolusjon, deck-bygging, energikostnader.
+
+## Spillregler (avklart — overstyrer prosjektbeskrivelsen der de er uenige)
+
+Prosjektbeskrivelsen er skrevet før disse avklaringene og bruker delvis andre ord (særlig
+«hånd» og «benk»). Der de er uenige gjelder listen under.
+
+- **Lag, ikke hånd.** Hver spiller tar med **tre** kort inn i kampen. Alle er med fra start —
+  det er et *lag* (som partyet i Pokémon-spillene), ikke en hånd med skjulte kort man spiller ut.
+  Derfor bærer hele laget løpende HP og statuser hele tiden, ikke bare det aktive monsteret.
+- **Felles bunke.** Begge spillere trekker sine tre fra én delt bunke på 7. Bunken hører derfor
+  hjemme på `GameState`, ikke på `Player`. Når man kan trekke er ikke avklart — foreløpig kun
+  ved spillstart.
+- **Tre av sju × 2 spillere = 6 av 7 kort.** Regnestykket er grunnen til at det ble tre og ikke
+  fem: 5 + 5 > 7. Ett kort blir liggende igjen i bunken.
+- **Ingen duplikater i v1.** Hver kortart finnes i nøyaktig ett eksemplar, så `Card.id` fungerer
+  som identitet for en monster-instans. **Merk:** åpner man for duplikater senere (deck-bygging
+  medfører det nesten alltid) trenger hver instans en egen id ved siden av kortart-referansen —
+  ellers kan ikke motoren skille to Magmo fra hverandre.
+- **Fritt bytte.** Aktivt monster kan byttes når som helst, også skadet, og **må** byttes når det
+  beseires. Et utbyttet monster går tilbake til laget og **beholder skade og statuser** — ellers
+  blir bytte gratis helbredelse.
+- **Beseiret → graveyard.** Ikke «benk». Ordet *benk* i prosjektbeskrivelsen betyr reserver;
+  her heter reservene laget, og `graveyard` er de beseiterte. Beseiret er endelig (0 HP,
+  statuser irrelevante), så graveyard trenger ikke bære kamptilstand.
+- **`switch`, ikke `playCard`.** Med fritt bytte og alle kort i spill fra start finnes det ingen
+  «spill et kort»-handling. Handlingen heter `switch`.
 
 ## Kortfakta (avlest fra originalfotoene i `src/assets/Original/`)
 
@@ -126,30 +152,84 @@ andre har Quilimon-logoen i samme felt — altså ingen evolusjon. Bekrefter `ev
 
 ## Status (per nå)
 
-- Prosjektoppsett (Vite/React/TS) på plass, 7 kort skannet og croppet. `npm install` er kjørt (`node_modules` finnes), `npx tsc --noEmit -p tsconfig.app.json` fungerer for typesjekk. `App.tsx` er ryddet for ubrukt Vite-mal-innhold.
-- Datamodell for kort/angrep er i gang (eieren skriver selv, Claude gir kun konseptuell veiledning — jf. Samarbeidsform under):
-  - `src/game/cards.ts`: `Card`-interface (eksportert) med `id`, `name`, `description`, `image`, `type` (union av elementtype-literals: `"dark" | "fire" | "fighting" | "grass" | "water" | "rock"`), `hp`, `attackIds: string[]` (fremmednøkkel-referanse til `Attack`), `evolution: string | null` (bevisst beholdt selv om evolusjon er utenfor v1-scope).
-  - `src/game/attacks.ts`: `Attack`-interface ferdig ryddet — `id`, `name`, `description`, `damage?` (valgfri, siden 5/14 handlinger ikke gjør skade), `diceCost: number[]`, `effect?: string` (streng-ID inn i effektregisteret — se registervalget over), `type` (union med `"normal"` for nøytrale angrep + de seks elementtypene). `"smoke"` ble bevisst fjernet fra unionen: Magma Smoke er `type: "fire"` med `effect: "magmaSmoke"` — element og effekt er to akser. Gamle `BurnEffect`/`PoisonEffect` er slettet.
-  - `src/game/gamestate.ts` (ny, under arbeid): skal holde tilstandstypene. Valgt struktur: `GameState` med `players: [Player, Player]`, `currentPlayerIndex` og `lastRoll`. Spillerne som **array + `currentPlayerIndex`** (ikke navngitte felter) fordi spillet er symmetrisk — «motstander» = `1 - index`, og handlinger skrives da én gang uavhengig av hvem som spiller. En evt. bot bygges *utenfor* motoren (ser på state, sender inn handlinger), så den påvirker ikke strukturen; ikke la bot-planer styre tilstandsformen.
-  - `src/game/types.ts` er fortsatt tom stub.
-- `InBattle` = ett monster i kamp. Refererer til `Card` via id (samme fremmednøkkel-mønster som `attackIds`), bærer det *mutable*: løpende HP, aktive statuser, evt. `damageMultiplier`. Skal ikke utvide eller mutere `Card` — `Card` forblir den immutable malen for en kortart. Åpen avklaring: hånd/bunke bør trolig være `Card` (kortart, ingen skade ennå), mens aktivt monster/benk blir `InBattle` først når kortet kommer i spill.
+- Prosjektoppsett (Vite/React/TS) på plass, 7 kort skannet og croppet. `npm install` er kjørt (`node_modules` finnes), `npx tsc --noEmit -p tsconfig.app.json` fungerer for typesjekk. `App.tsx` er ryddet for ubrukt Vite-mal-innhold (men har fortsatt en ubrukt `useState`-import).
+
+**Datamodellen er ferdig og kompilerer.** Alle tre filene under er komplette; typesjekken er ren
+bortsett fra `useState` i `App.tsx`. Alle 14 `attackIds` i `CARDS` finnes i `ATTACKS` (kryssjekket).
+
+- `src/game/cards.ts`: `Card`-interface + `CARDS: Record<string, Card>` med alle 7 kortene og
+  `getCard(id)`. Kortene har egenskrevne norske beskrivelser.
+- `src/game/attacks.ts`: `Attack`-interface + `ATTACKS: Record<string, Attack>` med alle 14
+  handlingene og `getAttack(id)`. `"smoke"` er bevisst ikke i type-unionen: Magma Smoke er
+  `type: "fire"` med en effekt — element og effekt er to akser. Gamle `BurnEffect`/`PoisonEffect`
+  er slettet.
+- `src/game/gamestate.ts`: `GameState`, `Player`, `InBattle`, `StatusEffect`. Ingen logikk ennå.
+- `src/game/types.ts` er fortsatt tom stub.
+
+**Mønster gjennom hele motoren: `GameState` inneholder bare id-er og tilstand, aldri hele
+`Card`-objekter.** `deck` og `graveyard` er `string[]`, `InBattle` har `cardId`. `CARDS`/`ATTACKS`
+er statiske kataloger som lastes én gang; staten holder kun det som endrer seg. Dermed dupliseres
+ikke statisk data ved hver immutable oppdatering, og `Card.hp` (maks-HP, en egenskap ved arten)
+blandes aldri med `InBattle.currentHp` (tilstand nå). `gamestate.ts` importerer derfor ingenting
+fra `cards.ts`.
+
+**Effekt-ID-er som er tatt i bruk** (må matche nøklene i effektregisteret når det skrives):
+`extraAction` (Mind Infuse), `grip`, `blind` (Magma Smoke), `mageckoGuard`, `reflect`,
+`diceScaledDamage` (Atcools SPESS — har bevisst ingen `damage`, siden skaden er 10 × terningverdi),
+`pollen`.
+
+**Terningkrav:** delvis avlest fra de fysiske kortene (Slepio, Magmo, Magecko). De åtte siste er
+fortsatt gjettet og markert med en kommentarblokk i `attacks.ts`. Eieren noterte samtidig at Mind
+Infuse og Fireball trolig er for sterke og må balanseres når spillet kjører.
+
 - Neste steg:
-  1. Ferdigstill tilstandstypene i `gamestate.ts` (`GameState`, `Player`, `InBattle`) slik at de kompilerer og beskriver et helt spill. Kun typer, ingen logikk ennå.
-  2. Fyll inn faktiske kortdata for de 7 kortene + reelle terningkrav (krever avlesning av de fysiske kortene — jf. Åpne designspørsmål).
-  3. Deretter: handlingene (`rollDice`, `playCard`, `attack`) i egen fil — tar `GameState` inn, returnerer ny `GameState` + hendelsesliste. Terningen bør ikke være tilfeldig *inni* motoren (send inn verdien / seed i state) så reglene kan enhetstestes deterministisk.
+  1. **Effektregisteret** — `Record<string, EffectFn>` som `Attack.effect` og `StatusEffect.effectId`
+     slår opp i. Trenger to slags funksjoner: én som kjøres ved utførelse, én per krok. Se
+     «Konsekvenser av registervalget» over — særlig at kroker må kunne svare «avbryt og erstatt»,
+     ikke bare returnere et justert tall.
+  2. **Handlingene** (`rollDice`, `switch`, `attack`) i egen fil — tar `GameState` inn, returnerer
+     ny `GameState` + hendelsesliste. Terningen skal ikke være tilfeldig *inni* motoren (send inn
+     verdien / seed i state) så reglene kan enhetstestes deterministisk.
+  3. **CLI** over samme motor, så reglene kan spilles gjennom før noe UI bygges.
 
 ## Samarbeidsform / preferanser
 
-- Eieren lærer TypeScript (kommer fra Java/JavaScript) og vil **skrive motorkoden selv**. Ønsker teoretisk/konseptuell hjelp og forklaringer, men **ikke at Claude skriver koden eller gir konkrete føringer på hvordan f.eks. kort-modellen skal se ut** — med mindre det uttrykkelig bes om. Spør før du produserer kode i `src/game/`.
+**Bygg først, diskuter etterpå.** Dette er den viktigste instruksen i fila. Eieren har erfart at
+øktene går med til en halvtimes gamedesign-diskusjon, fem linjer kode, og så to uker før neste økt
+der de samme spørsmålene tas opp igjen. Det skal ikke skje mer.
 
-## Åpne designspørsmål (avklares mot de fysiske kortene)
+- **Ta beslutninger på eierens vegne.** Når et designvalg dukker opp: velg det rimeligste, si i én
+  setning hva du valgte og hva det betyr, og kod videre. Ikke legg fram alternativer med
+  trade-offs og be eieren velge, med mindre valget er dyrt å reversere.
+- **Jakobs regler er løse og åpne for tolkning.** Eieren har ingen fast visjon og forventer å endre
+  struktur underveis. Mye av gamedesignet *er* å bygge noe, se hva som funker, og endre. En
+  beslutning som viser seg feil i faktisk spill koster mindre enn diskusjonen som skulle unngått den.
+- **Eieren lærer TypeScript** (kommer fra Java/JavaScript) og vil henge med på hva koden betyr og
+  hvordan ting fungerer. Forklar kort underveis — hva en konstruksjon gjør og hvorfor — men ikke
+  over-forklar hver eneste avgjørelse.
+
+**Eieren skriver koden. Claude skriver ikke kode i `src/game/`.** Dette gjelder fortsatt, og er
+ikke i konflikt med «bygg først» over — «ta beslutninger på mine vegne» betyr *designbeslutninger*
+(hvordan skal regelen være, hva skal feltet hete), ikke at Claude tar tastaturet. Claude tok feil
+om dette 2026-09-05 og skrev `gamestate.ts` og `attacks.ts`; det ble rullet tilbake.
+
+Formen som fungerer: **step-by-step-instruksjoner og veiledning**. Fortell hva som skal skrives,
+i hvilken rekkefølge og hvorfor — og la eieren skrive det. Vis gjerne små fragmenter eller
+signaturer for å forklare en konstruksjon, men ikke lever ferdige filer.
+
+## Åpne designspørsmål
+
+Disse er *ikke* blokkerende. Anta noe rimelig, kod videre, og noter antakelsen her.
 
 - **Eksakte terningkrav per angrep for alle 14 handlingene.** Terningprikkene lar seg ikke lese
   sikkert fra fotoene (4/5/6 er ikke til å skille fra hverandre), og det er nettopp de høye
-  verdiene som går igjen. Må leses av på de fysiske kortene.
+  verdiene som går igjen. Må leses av på de fysiske kortene — inntil da brukes gjettede verdier
+  i kortdataene, merket i fila.
 - Magecko og Atcool har hver sin handling uten navn — hadde de navn?
 - Slepio og Magmo mangler `SPESS`-merket som de fem andre har. Bevisst? (Slepio er merket «v.0»
   og er kanskje tegnet først.)
-- Om aktivt monster byttes fritt eller kun når ett beseires
-- Hva som skjer ved terningkast som ikke matcher noe angrep
-- Presis tolkning av "Grip – vinner runden og stjeler kort"
+- Hva som skjer ved terningkast som ikke matcher noe angrep (prosjektbeskrivelsen sier «ingenting
+  skjer, turen går videre» — brukes til noe annet er bestemt)
+- Presis tolkning av «Grip – vinner runden og stjeler kort». Med felles bunke gir «din bunke»
+  ikke lenger mening; mest sannsynlig betyr det å ta et kort fra motstanderens lag over i sitt eget.
+- Når man kan trekke fra fellesbunken (kun ved start, eller underveis?)
