@@ -18,12 +18,10 @@ export interface InBattle {
     currentHp : number;
     statusEffects : StatusEffect[];
     damageMultiplier : number;
-
-
 }
 
 export interface StatusEffect {
     effectId: string;
     remaining: number;
-    durationType: "rounds" | "uses";
+    durationType: "turns" | "uses";
 }

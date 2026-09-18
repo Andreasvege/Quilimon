@@ -178,9 +178,13 @@ fra `cards.ts`.
 `diceScaledDamage` (Atcools SPESS — har bevisst ingen `damage`, siden skaden er 10 × terningverdi),
 `pollen`.
 
-**Terningkrav:** delvis avlest fra de fysiske kortene (Slepio, Magmo, Magecko). De åtte siste er
-fortsatt gjettet og markert med en kommentarblokk i `attacks.ts`. Eieren noterte samtidig at Mind
-Infuse og Fireball trolig er for sterke og må balanseres når spillet kjører.
+**Terningkrav:** alle 14 er avlest fra de fysiske kortene. **Kjent feil, ikke rettet ennå:** mange
+står som `[4, 6]` (Rock Kick, Scratch, Charge, Bubbles, Pollen, Atcools SPESS, Magecko Guard). Det er
+trolig intervaller lest som fra–til — Jakob ser ut til å ha brukt intervall på eldre kort og
+utlistede sett på nyere. Men `diceCost` er et *sett*, så motoren leser `[4, 6]` som «kun 4 eller 6»
+og en femmer feiler. Eieren skriver dem ut manuelt (`[4, 5, 6]`) senere; ikke rett dem uoppfordret.
+Eieren noterte samtidig at Mind Infuse og Fireball trolig er for sterke og må balanseres når
+spillet kjører.
 
 - Neste steg:
   1. **Effektregisteret** — `Record<string, EffectFn>` som `Attack.effect` og `StatusEffect.effectId`
