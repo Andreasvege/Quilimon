@@ -163,8 +163,19 @@ bortsett fra `useState` i `App.tsx`. Alle 14 `attackIds` i `CARDS` finnes i `ATT
   handlingene og `getAttack(id)`. `"smoke"` er bevisst ikke i type-unionen: Magma Smoke er
   `type: "fire"` med en effekt — element og effekt er to akser. Gamle `BurnEffect`/`PoisonEffect`
   er slettet.
-- `src/game/gamestate.ts`: `GameState`, `Player`, `InBattle`, `StatusEffect`. Ingen logikk ennå.
-- `src/game/types.ts` er fortsatt tom stub.
+- `src/game/gamestate.ts`: `GameState`, `Player`, `InBattle`, `StatusEffect`. Rene typer.
+- `src/game/events.ts`: `GameEvent` (diskriminert union med 10 varianter) + `ActionResult`
+  (`{ state, events }` — returtypen alle handlinger deler).
+- `src/game/actions.ts`: motorlogikken. `createGame`, `rollDice` og `getActive` er ferdige og
+  kjører; `dealDamage` er under arbeid. Se Roadmap for resten.
+- `src/game/types.ts` er slettet — navnet sa ingenting, og hendelsene bor i `events.ts`. Den var
+  opprinnelig en tom `interface Types {}`-stub, antakelig tenkt for elementtypene; et interface
+  kunne aldri blitt det, siden elementtyper er en union av strenger og ikke et objekt.
+
+**To slags funksjoner i `actions.ts`, ikke bland dem:** *handlinger* (`rollDice`, `attack`,
+`switchMonster`) endrer spillet og returnerer `ActionResult`; *hjelpefunksjoner* (`getActive`,
+`dealDamage`) svarer på et spørsmål eller gjør én liten ting og returnerer det de finner. Eieren
+gikk i den fella én gang — `getActive` skrevet som om den skulle returnere `ActionResult`.
 
 **Mønster gjennom hele motoren: `GameState` inneholder bare id-er og tilstand, aldri hele
 `Card`-objekter.** `deck` og `graveyard` er `string[]`, `InBattle` har `cardId`. `CARDS`/`ATTACKS`
@@ -186,15 +197,55 @@ og en femmer feiler. Eieren skriver dem ut manuelt (`[4, 5, 6]`) senere; ikke re
 Eieren noterte samtidig at Mind Infuse og Fireball trolig er for sterke og må balanseres når
 spillet kjører.
 
-- Neste steg:
-  1. **Effektregisteret** — `Record<string, EffectFn>` som `Attack.effect` og `StatusEffect.effectId`
-     slår opp i. Trenger to slags funksjoner: én som kjøres ved utførelse, én per krok. Se
-     «Konsekvenser av registervalget» over — særlig at kroker må kunne svare «avbryt og erstatt»,
-     ikke bare returnere et justert tall.
-  2. **Handlingene** (`rollDice`, `switch`, `attack`) i egen fil — tar `GameState` inn, returnerer
-     ny `GameState` + hendelsesliste. Terningen skal ikke være tilfeldig *inni* motoren (send inn
-     verdien / seed i state) så reglene kan enhetstestes deterministisk.
-  3. **CLI** over samme motor, så reglene kan spilles gjennom før noe UI bygges.
+## Roadmap
+
+**Prioritert strategi: minimum spillbar demo først, effektsystemet etterpå.** Grunnen er at
+**9 av 14 handlinger er ren skade** (Fireball, Scratch, Charge, Bubbles, Spectral Beem, Inflame,
+Rock Kick, Mind Infuses skadedel). Bare 5 krever effektsystemet. Et spill med bare skadehandlingene
+er ekte Quilimon, kan spilles, og gir svar på balansespørsmålene (Fireball/Mind Infuse er
+mistenkt for sterke) som ingen diskusjon kan gi. Ikke bygg effektregisteret før spillet kjører.
+
+Anslag ved siste oppdatering: ca. 10–15 % av full v1 er gjort; en spillbar demo uten effekter
+ligger på ca. 35–40 %.
+
+### Fase 1 — motorlogikk uten effekter *(pågår)*
+1. ✅ `createGame(player1Setup, player2Setup)` → `GameState`. Kortene sendes **inn**, trekkes ikke
+   tilfeldig inni, slik at tester kan sette opp en bestemt situasjon.
+2. ✅ `rollDice(state, value)` → `ActionResult`. Terningverdien sendes inn av samme grunn.
+3. ✅ `getActive(state, playerIndex)` → `InBattle`. Ren oppslagsfunksjon, ingen `ActionResult`.
+4. ⬜ `dealDamage(state, playerIndex, amount)` → `GameState`. Nestet immutabel oppdatering
+   (`state → players → team → monster`); én kopi per nivå.
+5. ⬜ `attack(state, attackId)` → `ActionResult`. Sjekk at `lastRoll` matcher `diceCost`, kall
+   `dealDamage`, sjekk om målet er beseiret (→ `graveyard`), send hendelsene.
+6. ⬜ `switchMonster(state, teamIndex)` → `ActionResult`. Fritt bytte; skade og statuser beholdes.
+7. ⬜ `endTurn(state)` → `ActionResult`. Bytt `currentPlayerIndex`, tell ned `"turns"`-statuser
+   (men **ikke** `"uses"`-statuser — de telles ned av kroken som utløser dem).
+8. ⬜ Seier/tap: en spiller uten monstre igjen har tapt → `gameEnded`.
+
+### Fase 2 — CLI
+Tekstbasert spill over samme motor (arkitekturkrav 6). Validerer reglene før noe UI bygges, og er
+stedet `Math.random()` for terningen hører hjemme — utenfor motoren.
+
+### Fase 3 — grafisk skall
+React-UI over samme motor: to kort på skjermen, HP, terningknapp, angrepsknapper. Bildene i
+`src/assets/Cropped/`; UI-laget oversetter `Card.image` (filnavn) → URL, så motoren forblir fri
+for bundler-avhengigheter.
+
+### Fase 4 — effektsystemet
+Først nå. Se «Konsekvenser av registervalget» over — særlig at kroker må kunne svare «avbryt og
+erstatt», ikke bare returnere et justert tall. Rekkefølge: typene (kontrakten) → krokpunktene i
+`attack` → én effekt om gangen, mot en flyt som allerede kjører.
+
+### Fase 5 — polish og deploy
+«Juicy» animasjoner (terningkast, kortrist, HP-drenering, tall som spretter), og deploy til en
+nettlenke uten installasjon.
+
+### Etterslep (ikke blokkerende)
+- `[4, 6]`-terningkravene i `attacks.ts` skrives ut til `[4, 5, 6]` — eieren gjør det manuelt
+- De seks elementtypene står duplisert i `cards.ts` og `attacks.ts`; kan trekkes ut til én
+  `QuilimonType`-union (`Attack.type` blir `QuilimonType | "normal"`)
+- Ubrukt `useState`-import i `App.tsx`
+- Balansejustering av Mind Infuse og Fireball — krever at spillet kan spilles først
 
 ## Samarbeidsform / preferanser
 
@@ -211,6 +262,17 @@ der de samme spørsmålene tas opp igjen. Det skal ikke skje mer.
 - **Eieren lærer TypeScript** (kommer fra Java/JavaScript) og vil henge med på hva koden betyr og
   hvordan ting fungerer. Forklar kort underveis — hva en konstruksjon gjør og hvorfor — men ikke
   over-forklar hver eneste avgjørelse.
+
+**Foreslå den enkleste og mest lesbare løsningen, ikke den smarteste.** Eieren ba eksplisitt om
+dette (2026-10-13): Claude hadde en tendens til å gi korteste/mest elegante variant — tette
+`.map()`-kall med ternære uttrykk, `Math.max` i stedet for en `if`, kjeder i stedet for navngitte
+mellomsteg. De er vanskeligere å lese og lærer bort mindre.
+
+- Velg eksplisitte, åpenbare steg med navngitte variabler, selv om det blir flere linjer og litt
+  mindre effektivt. En vanlig `if` slår et smart uttrykk.
+- Gjør det gjerne i flere små, navngitte trinn framfor én tett setning.
+- Optimalisering er et **eget, senere** steg. Da har eieren kontroll på hva funksjonen gjør, hvordan
+  den så ut før, og hva omskrivingen faktisk forbedrer — og lærer av begge versjoner.
 
 **Eieren skriver koden. Claude skriver ikke kode i `src/game/`.** Dette gjelder fortsatt, og er
 ikke i konflikt med «bygg først» over — «ta beslutninger på mine vegne» betyr *designbeslutninger*

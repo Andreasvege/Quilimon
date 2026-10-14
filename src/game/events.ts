@@ -1,3 +1,5 @@
+import type { GameState } from "./gamestate";
+
 export type GameEvent =
     | { kind: "diceRolled"; value: number }
     | { kind: "damageDealt"; targetCardId: string; amount: number }
@@ -8,4 +10,9 @@ export type GameEvent =
     | { kind: "statusRemoved"; targetCardId: string; effectId: string }
     | { kind: "turnBegan"; currentPlayerIndex: 0 | 1 }
     | { kind: "turnEnded"; currentPlayerIndex: 0 | 1 }
-    | { kind: "gameEnded"; winnerPlayerIndex: 0 | 1 }
+    | { kind: "gameEnded"; winnerPlayerIndex: 0 | 1 };
+
+export interface ActionResult {
+        state: GameState;
+        events: GameEvent[];
+}
