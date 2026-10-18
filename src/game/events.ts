@@ -16,3 +16,4 @@ export interface ActionResult {
         state: GameState;
         events: GameEvent[];
 }
+    

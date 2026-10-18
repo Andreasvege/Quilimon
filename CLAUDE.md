@@ -199,6 +199,18 @@ spillet kjører.
 
 ## Roadmap
 
+**Demo-frist: fredag 23. oktober 2026** — eieren overleverer spillet til Jakob da (flyttet fra
+søndag 18.10). Motoren (fase 1) ble ferdig 18.10. Plan for resten: CLI-spill-løkke i
+`scripts/play.ts` (fase 2 er gjeninnført, siden det er tid) → React-UI → juice → deploy.
+Avtale: eieren skriver selv så lenge han kan — også UI. Først når han sier at tiden er ute, tar
+Claude over UI-et. Ikke ta det over før det sies.
+
+**Jakob er grafisk designer**, og en del av gaven er å spørre om han vil jobbe videre på spillet
+sammen. Mye av det visuelle blir derfor trolig byttet ut. UI-et skal imponere litt, men investeringen
+går i det som overlever en redesign: kortbildene hans i stort format, og billig «juice» (HP-bar som
+drenerer, kortrist ved treff, skadetall som spretter, terninganimasjon). Ikke bruk tid på detaljert
+styling. Hold UI-laget tynt og adskilt fra motoren, slik at han kan tegne om alt uten å røre reglene.
+
 **Prioritert strategi: minimum spillbar demo først, effektsystemet etterpå.** Grunnen er at
 **9 av 14 handlinger er ren skade** (Fireball, Scratch, Charge, Bubbles, Spectral Beem, Inflame,
 Rock Kick, Mind Infuses skadedel). Bare 5 krever effektsystemet. Et spill med bare skadehandlingene
@@ -208,19 +220,21 @@ mistenkt for sterke) som ingen diskusjon kan gi. Ikke bygg effektregisteret før
 Anslag ved siste oppdatering: ca. 10–15 % av full v1 er gjort; en spillbar demo uten effekter
 ligger på ca. 35–40 %.
 
-### Fase 1 — motorlogikk uten effekter *(pågår)*
+### Fase 1 — motorlogikk uten effekter *(ferdig 18.10)*
+Valg gjort: beseiret fjernes fra `team` til `graveyard` og `activeIndex` settes til 0; `gameEnded`
+sendes fra `attack`; bytte avslutter ikke turen; `endTurn` teller ikke ned statuser ennå (fase 4).
 1. ✅ `createGame(player1Setup, player2Setup)` → `GameState`. Kortene sendes **inn**, trekkes ikke
    tilfeldig inni, slik at tester kan sette opp en bestemt situasjon.
 2. ✅ `rollDice(state, value)` → `ActionResult`. Terningverdien sendes inn av samme grunn.
 3. ✅ `getActive(state, playerIndex)` → `InBattle`. Ren oppslagsfunksjon, ingen `ActionResult`.
-4. ⬜ `dealDamage(state, playerIndex, amount)` → `GameState`. Nestet immutabel oppdatering
+4. ✅ `dealDamage(state, playerIndex, amount)` → `GameState`. Nestet immutabel oppdatering
    (`state → players → team → monster`); én kopi per nivå.
-5. ⬜ `attack(state, attackId)` → `ActionResult`. Sjekk at `lastRoll` matcher `diceCost`, kall
+5. ✅ `attack(state, attackId)` → `ActionResult`. Sjekk at `lastRoll` matcher `diceCost`, kall
    `dealDamage`, sjekk om målet er beseiret (→ `graveyard`), send hendelsene.
-6. ⬜ `switchMonster(state, teamIndex)` → `ActionResult`. Fritt bytte; skade og statuser beholdes.
-7. ⬜ `endTurn(state)` → `ActionResult`. Bytt `currentPlayerIndex`, tell ned `"turns"`-statuser
+6. ✅ `switchMonster(state, teamIndex)` → `ActionResult`. Fritt bytte; skade og statuser beholdes.
+7. ✅ `endTurn(state)` → `ActionResult`. Bytt `currentPlayerIndex`, tell ned `"turns"`-statuser
    (men **ikke** `"uses"`-statuser — de telles ned av kroken som utløser dem).
-8. ⬜ Seier/tap: en spiller uten monstre igjen har tapt → `gameEnded`.
+8. ✅ Seier/tap: en spiller uten monstre igjen har tapt → `gameEnded`.
 
 ### Fase 2 — CLI
 Tekstbasert spill over samme motor (arkitekturkrav 6). Validerer reglene før noe UI bygges, og er
@@ -239,6 +253,29 @@ erstatt», ikke bare returnere et justert tall. Rekkefølge: typene (kontrakten)
 ### Fase 5 — polish og deploy
 «Juicy» animasjoner (terningkast, kortrist, HP-drenering, tall som spretter), og deploy til en
 nettlenke uten installasjon.
+
+### Etter demoen — «ordentlig» versjon i spillmotor (besluttet 2026-10-16)
+
+Hvis Jakob sier ja til å jobbe videre, flyttes spillet fra nettleser til en **spillmotor med C#**
+og leveres som kjørbar fil (Windows/Mac). Nettlenke er ikke lenger et krav. Arbeidsdeling:
+Jakob eier det visuelle i editoren (animasjoner, timing, partikler), eieren eier reglene.
+
+**Valget står mellom Godot 4 og Unity, begge med C#.** Polish er ikke et motorargument — begge
+rendrer 2D likt; det er illustrasjonene og animasjonene som avgjør utseendet. Reelle forskjeller:
+Unity har større økosystem og bedre no-code-verktøy for effekter (Shader Graph, VFX Graph,
+DOTween) og er mer verdt på Jakobs CV. Godot er lettere, gratis uten konto, og har førsteklasses
+2D/UI. Står det likt, velg Unity.
+
+**Avgjøres med et prøveprosjekt, likt i begge motorer, én kveld per motor:** ett kort med Jakobs
+tegning, en terningknapp, og ved trykk: terningen ruller, kortet rister, skadetall spretter opp,
+HP-bar drenerer. Ingen regler, bare juice. Jakob skal justere timing og farger **uten hjelp** — den
+editoren han kommer lengst i på egen hånd, er den riktige.
+
+**Motoren porteres, ikke skrives om.** Arkitekturen (motor adskilt fra UI, immutabel tilstand,
+hendelseslogg, datadrevne kort) er den samme i C#: rene klasser uten motor-avhengigheter i en egen
+mappe/prosjekt, `record` + `with`-uttrykk for immutabilitet (tilsvarer `{ ...state, x }`), testet
+med NUnit/xUnit uten editoren. Scenene abonnerer på hendelseslisten. `actions.ts` oversettes nesten
+linje for linje.
 
 ### Etterslep (ikke blokkerende)
 - `[4, 6]`-terningkravene i `attacks.ts` skrives ut til `[4, 5, 6]` — eieren gjør det manuelt
