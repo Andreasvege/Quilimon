@@ -189,18 +189,15 @@ fra `cards.ts`.
 `diceScaledDamage` (Atcools SPESS — har bevisst ingen `damage`, siden skaden er 10 × terningverdi),
 `pollen`.
 
-**Terningkrav:** alle 14 er avlest fra de fysiske kortene. **Kjent feil, ikke rettet ennå:** mange
-står som `[4, 6]` (Rock Kick, Scratch, Charge, Bubbles, Pollen, Atcools SPESS, Magecko Guard). Det er
-trolig intervaller lest som fra–til — Jakob ser ut til å ha brukt intervall på eldre kort og
-utlistede sett på nyere. Men `diceCost` er et *sett*, så motoren leser `[4, 6]` som «kun 4 eller 6»
-og en femmer feiler. Eieren skriver dem ut manuelt (`[4, 5, 6]`) senere; ikke rett dem uoppfordret.
+**Terningkrav:** alle 14 er avlest fra de fysiske kortene. De sju som sto som `[4, 6]` (lest som
+intervall fra–til) er rettet til `[4, 5, 6]` (1.11, etter eierens ønske).
 Eieren noterte samtidig at Mind Infuse og Fireball trolig er for sterke og må balanseres når
 spillet kjører.
 
 ## Roadmap
 
-**Demo-frist: fredag 23. oktober 2026** — eieren overleverer spillet til Jakob da (flyttet fra
-søndag 18.10). Motoren (fase 1) ble ferdig 18.10. Plan for resten: CLI-spill-løkke i
+**Demo-frist: mandag 2. november 2026** — eieren overleverer spillet til Jakob da (flyttet fra
+søndag 18.10 og fredag 23.10). CLI-løkka i `scripts/play.ts` ble ferdig 1.11. Motoren (fase 1) ble ferdig 18.10. Plan for resten: CLI-spill-løkke i
 `scripts/play.ts` (fase 2 er gjeninnført, siden det er tid) → React-UI → juice → deploy.
 Avtale: eieren skriver selv så lenge han kan — også UI. Først når han sier at tiden er ute, tar
 Claude over UI-et. Ikke ta det over før det sies.
@@ -278,7 +275,6 @@ med NUnit/xUnit uten editoren. Scenene abonnerer på hendelseslisten. `actions.t
 linje for linje.
 
 ### Etterslep (ikke blokkerende)
-- `[4, 6]`-terningkravene i `attacks.ts` skrives ut til `[4, 5, 6]` — eieren gjør det manuelt
 - De seks elementtypene står duplisert i `cards.ts` og `attacks.ts`; kan trekkes ut til én
   `QuilimonType`-union (`Attack.type` blir `QuilimonType | "normal"`)
 - Ubrukt `useState`-import i `App.tsx`

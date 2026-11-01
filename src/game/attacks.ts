@@ -50,7 +50,7 @@ export const ATTACKS: Record<string, Attack> = {
         id: "mageckoGuard",
         name: "Guard",
         description: "Magecko vokter med kung-fu ferdigheter. Reduserer skade fra neste angrep og sender halvparten tilbake.",
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         effect: "mageckoGuard",
         type: "fighting"
     },
@@ -67,7 +67,7 @@ export const ATTACKS: Record<string, Attack> = {
         name: "Rock Kick",
         description: "Sparker løs en steinblokk mot motstanderen.",
         damage: 30,
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         type: "normal"
     },
     // Skaden er 10 x terningverdien, så den kan ikke stå som et tall her.
@@ -77,7 +77,7 @@ export const ATTACKS: Record<string, Attack> = {
         id: "atcoolSpess",
         name: "Rock Throw",
         description: "Slynger sin egen forsteinede hud mot motstanderen. Kraften avhenger av terningen.",
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         effect: "diceScaledDamage",
         type: "rock"
     },
@@ -86,7 +86,7 @@ export const ATTACKS: Record<string, Attack> = {
         name: "Scratch",
         description: "Klorer motstanderen med skarpe klør.",
         damage: 20,
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         type: "normal"
     },
     "inflame": {
@@ -102,14 +102,14 @@ export const ATTACKS: Record<string, Attack> = {
         name: "Charge",
         description: "Stormer inn i motstanderen med hodet først.",
         damage: 20,
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         type: "normal"
     },
     "pollen": {
         id: "pollen",
         name: "Pollen",
         description: "Sprer sporer som gjør motstanderen omtåket. Krever en sekser for å angripe neste runde.",
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         effect: "pollen",
         type: "grass"
     },
@@ -118,7 +118,7 @@ export const ATTACKS: Record<string, Attack> = {
         name: "Bubbles",
         description: "Spruter en byge av bobler mot motstanderen.",
         damage: 20,
-        diceCost: [4, 6],
+        diceCost: [4, 5, 6],
         type: "normal"
     },
     "spectralBeem": {
