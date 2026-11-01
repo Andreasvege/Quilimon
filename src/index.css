@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Patrick+Hand+SC&family=Nunito:wght@400;600;700;800&display=swap");
+
+/* Retning E: «Mørkt trebord». Kortene ligger på et mørkt bord under en varm lampe.
+   Alt rundt kortene er dempet, så tegningene er det eneste med farge. */
+
+:root {
+    /* Inne i kortene: tusj på papir, som før */
+    --ink: #1c1814;
+    --ink-soft: rgba(28, 24, 20, 0.6);
+    --paper-light: #fbf6ea;
+    --marker: #ffd66b;
+    --red: #e5483e;
+
+    /* Rundt kortene: bordet */
+    --wood: #31201a;
+    --text: #efe3cf;
+    --text-soft: rgba(239, 227, 207, 0.6);
+    --lamp: rgba(255, 205, 140, 0.16);
+
+    --hp-high: #7cc04f;
+    --hp-mid: #f2c230;
+    --hp-low: #e5483e;
+
+    font-family: "Nunito", system-ui, sans-serif;
+    font-size: 18px;
+    color: var(--text);
+    background: var(--wood);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--wood);
+    /* Bordet: vannrette planker i varmt, mørkt tre. Fire lag, øverst først:
+       1. lampelys litt over midten, mørkner mot kantene
+       2. og 3. to lag årer med ulik avstand som heller litt hver sin vei,
+          så mønsteret blir ujevnt og ser ekte ut
+       4. fuger mellom plankene (vannrette streker hver 160px) */
+    background-image:
+        radial-gradient(ellipse at 50% 38%, rgba(255, 196, 140, 0.15) 0%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
+        repeating-linear-gradient(1.2deg, transparent 0px, transparent 14px, rgba(0, 0, 0, 0.12) 15px, transparent 18px, transparent 41px),
+        repeating-linear-gradient(-0.8deg, transparent 0px, transparent 22px, rgba(255, 215, 175, 0.04) 23px, transparent 27px, transparent 37px),
+        repeating-linear-gradient(180deg, transparent 0px, transparent 158px, rgba(0, 0, 0, 0.4) 159px, rgba(0, 0, 0, 0.4) 160px, rgba(255, 220, 180, 0.05) 161px, transparent 162px);
+    background-attachment: fixed, scroll, scroll, scroll;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: default;
+}
+

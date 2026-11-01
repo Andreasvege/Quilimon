@@ -237,7 +237,22 @@ sendes fra `attack`; bytte avslutter ikke turen; `endTurn` teller ikke ned statu
 Tekstbasert spill over samme motor (arkitekturkrav 6). Validerer reglene før noe UI bygges, og er
 stedet `Math.random()` for terningen hører hjemme — utenfor motoren.
 
-### Fase 3 — grafisk skall
+### Fase 3 — grafisk skall *(ferdig 1.11, skrevet av Claude etter eierens ønske)*
+UI-laget bor i `src/ui/` og `src/App.tsx`, og rører aldri motoren direkte — det kaller bare
+handlingene i `actions.ts`. `App.tsx`: startskjerm, stokker og deler ut 3+3 tilfeldig. `ui/Battle.tsx`:
+kampen, med animasjonssekvens per angrep (treff → beseiret → `endTurn`) styrt av eventene; viser
+et beseiret monster med 0 HP et øyeblikk via en kopi av staten (`withActiveHp`), siden motoren
+fjerner det med en gang. `ui/CardView.tsx`: kort, reservekort, graveyard. `ui/Dice.tsx`: terning.
+`ui/images.ts`: filnavn → URL. Bildene lastes fra `src/assets/Web/` (nedskalert til 1200 px, 1,3 MB
+totalt) — originalene i `Cropped/` er urørt. Juice (rist, rødt blink, skadetall, HP-drenering,
+terningrull, kort som faller ut, vinnerskjerm) er ren CSS i `App.css`.
+Kortet (`QuilimonCard` i `ui/CardView.tsx`) følger strukturen på Jakobs originaler: topp med typeikon,
+NAVN og `L.<hp>`; bildet; lys stripe (brukt som HP-bar); angrep som fargede bånd `A: ⚃–⚅ NAVN -20`
+med SPESS-fane; bunn med evolusjon eller logo; hele kortet farget etter type (ild oransje, gress
+lime, kamp rosa, vann blå, stein grå, mørk svart-hvitt). Alle mål er i `em`, så minikortene på
+benken er samme komponent i mindre font-size (forstørres ved hover). Visuelt språk rundt kortene er
+ikke bestemt: fire retninger ligger i artefakten https://claude.ai/artifact/KUMa2yCCosDQmAji1G6RMq
+(A tusj og papir, B spillbord, C galleri, D lommekonsoll). **Eieren valgte A (1.11), og byttet samme kveld til E «Mørkt trebord»** (lowkey-forslag E–G ligger i samme artefakt). Appen er nå: mørkt tre i `index.css`: vannrette planker, varm kirsebærtone `#31201a`, to lag CSS-årer som heller hver sin vei + lampe-vignett (eieren prøvde SVG-støy og E-stripene, og valgte denne), kremfarget Nunito-tekst og pilleknapper rundt kortene, kortene uendret i tusjstil men med glød i sin egen typefarge (`color-mix` av `--body`); kortet som har turen puster sterkere (`glow-pulse`). Fonter: Patrick Hand SC (logo, navn, kort), Nunito (UI). Minikort forstørres 1,3× ved hover. Jakob kan fortsatt endre retning.
 React-UI over samme motor: to kort på skjermen, HP, terningknapp, angrepsknapper. Bildene i
 `src/assets/Cropped/`; UI-laget oversetter `Card.image` (filnavn) → URL, så motoren forblir fri
 for bundler-avhengigheter.
