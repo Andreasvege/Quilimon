@@ -905,30 +905,156 @@
 
 /* ================= Mobil ================= */
 
+/* Mobil og nettbrett: de to aktive kortene side om side øverst, og terningen
+   i en fast linje nederst. Da får hele kampen plass på én skjerm, og begge
+   spillerne ser begge kortene uten å scrolle. */
 @media (max-width: 900px) {
     .battle {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding-top: 1.5rem;
+        min-height: 100dvh;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr auto;
+        align-content: stretch;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 12px 0;
+    }
+
+    /* Spiller 1 til venstre, spiller 2 til høyre, kontrollene under begge */
+    .side:first-child {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .side:nth-child(3) {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .side {
+        gap: 0.6rem;
+    }
+
+    .player-name {
+        font-size: 1.25rem;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .turn-tag {
+        font-size: 0.6rem;
+    }
+
+    /* Kortet skalerer med skjermbredden: halve bredden minus marger, delt på kortets bredde i em */
+    .card,
+    .card-empty {
+        font-size: min(15px, calc((100vw - 32px) / 2 / 22.6));
+    }
+
+    .card-empty {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 22 / 30;
+        border-radius: 12px;
+    }
+
+    .reserves {
+        gap: 0.6rem;
+        padding-bottom: 0.8rem;
+    }
+
+    .bench,
+    .graveyard {
+        gap: 6px;
+    }
+
+    .mini {
+        font-size: min(5.6px, calc((100vw - 32px) / 2 / 50));
+    }
+
+    .mini-grave {
+        font-size: min(3.6px, calc((100vw - 32px) / 2 / 75));
+    }
+
+    .mini-label {
+        font-size: 0.65rem;
+        bottom: -1.1rem;
     }
 
     .center {
-        width: 100%;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        position: sticky;
+        bottom: 0;
+        width: auto;
+        margin: 0 -12px;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "dice message"
+            "dice controls";
+        align-items: center;
+        column-gap: 14px;
+        row-gap: 6px;
+        background: rgba(20, 12, 8, 0.72);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid rgba(239, 227, 207, 0.12);
+        z-index: 30;
     }
 
     .logo-small {
         display: none;
     }
 
-    .dice-big {
-        width: 80px;
-        height: 80px;
-        padding: 10px;
+    .center .dice {
+        grid-area: dice;
     }
 
-    .card,
-    .card-empty {
-        font-size: 14px;
+    .dice-big {
+        width: 64px;
+        height: 64px;
+        padding: 8px;
+    }
+
+    .message {
+        grid-area: message;
+        min-height: 0;
+        font-size: 1rem;
+        text-align: left;
+    }
+
+    .controls {
+        grid-area: controls;
+        flex-direction: row;
+        gap: 0.4rem;
+    }
+
+    .big-button {
+        padding: 0.7em 1.4em;
+    }
+
+    .damage-pop {
+        font-size: 3rem;
+    }
+
+    .start-form {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+}
+
+/* Telefoner har ingen mus: ikke forstørr minikort ved «hover» (det henger igjen etter et trykk) */
+@media (hover: none) {
+    .mini:hover,
+    .bench .mini:nth-child(2):hover {
+        transform: rotate(-2deg);
+    }
+
+    .mini-grave:hover {
+        transform: rotate(4deg);
+        filter: grayscale(1);
+        opacity: 0.4;
     }
 }
 
