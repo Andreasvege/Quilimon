@@ -67,12 +67,21 @@ while (!gameOver) {
         const result = attack(state, chosenId);
         state = result.state;
 
+        let extraAction = false;
         for (const event of result.events) {
             console.log(event);
             if (event.kind === "gameEnded") {
                 console.log(state.players[event.winnerPlayerIndex].name + " vant!");
                 gameOver = true;
             }
+            if (event.kind === "extraAction") {
+                extraAction = true;
+            }
+        }
+        // Mind Infuse: samme spiller får en tur til
+        if (extraAction && !gameOver) {
+            console.log("Du får angripe igjen!");
+            continue;
         }
     }
 

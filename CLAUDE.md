@@ -258,6 +258,17 @@ React-UI over samme motor: to kort på skjermen, HP, terningknapp, angrepsknappe
 for bundler-avhengigheter.
 
 ### Fase 4 — effektsystemet
+**Delvis gjort 2.11 (skrevet av Claude etter eierens ønske, før demoen):** fire effekter virker, som
+enkle `if`-er i `actions.ts` — *ikke* registeret ennå. `diceScaledDamage` (Rock Throw, 10 × kast) og
+`extraAction` (Mind Infuse: `attack` sender hendelsen `extraAction`, og den som styrer spillet lar være
+å kalle `endTurn`). `blind` (Magma Smoke) og `pollen` legges som `"turns"`-status med `remaining: 1` på
+forsvarerens aktive monster (`addStatus`). Kroken «før angrep» er `getAttackBlocker(monster, roll)`
+(eksportert, UI-et bruker den også); et stoppet angrep sender `attackBlocked`. Kroken «ved rundeslutt» er
+`tickStatuses`, kalt fra `endTurn` — teller bare ned laget til spilleren som *avslutter* turen, ellers
+ville en status lagt på motstanderen forsvinne før den virket. Statuser følger monsteret ved bytte (bytter
+man ut et blendet monster, kan det nye angripe). Rene effektangrep sender ingen `damageDealt`.
+Gjenstår: `mageckoGuard`, `reflect` og `grip` — merket med * og «Virker ikke ennå» på kortet
+(`NOT_WORKING_YET` i `ui/CardView.tsx`). Når registeret bygges, flyttes de fire `if`-ene inn i det.
 Først nå. Se «Konsekvenser av registervalget» over — særlig at kroker må kunne svare «avbryt og
 erstatt», ikke bare returnere et justert tall. Rekkefølge: typene (kontrakten) → krokpunktene i
 `attack` → én effekt om gangen, mot en flyt som allerede kjører.

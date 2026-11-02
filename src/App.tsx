@@ -60,7 +60,7 @@ function App() {
     return (
         <main className="start">
             <h1 className="logo">Quilimon</h1>
-            <p className="tagline">Et kortspill tegnet av Jakob</p>
+            <p className="tagline">Et legendarisk kortspill av Jakob Vege</p>
             <div className="fan">{fan}</div>
 
             <div className="start-form">

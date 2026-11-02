@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { rollDice, attack, switchMonster, endTurn } from "../game/actions";
+import { rollDice, attack, switchMonster, endTurn, getAttackBlocker } from "../game/actions";
 import { getCard } from "../game/cards";
 import { getAttack } from "../game/attacks";
 import type { GameState, Player } from "../game/gamestate";
 import { CardView, BenchCard, GraveCard } from "./CardView";
 import type { Hit } from "./CardView";
 import { Dice } from "./Dice";
+import { NOT_WORKING_YET } from "./CardView";
 
 // Hvor lenge hver del av en angrepsanimasjon varer (millisekunder)
 const ROLL_TIME = 700;
@@ -79,7 +80,20 @@ export function Battle({ initialState, onRestart }: BattleProps) {
 
         // Treffer terningen noe?
         const player = newState.players[newState.currentPlayerIndex];
-        const card = getCard(player.team[player.activeIndex].cardId);
+        const monster = player.team[player.activeIndex];
+        const card = getCard(monster.cardId);
+
+        // En status kan stoppe alle angrep denne turen
+        const blocker = getAttackBlocker(monster, roll);
+        if (blocker === "blind") {
+            say(`${roll} … ${card.name} er blendet av røyken og kan ikke angripe`);
+            return;
+        }
+        if (blocker === "pollen") {
+            say(`${roll} … ${card.name} er omtåket av pollen og trenger en sekser`);
+            return;
+        }
+
         let anyHit = false;
         for (const attackId of card.attackIds) {
             if (getAttack(attackId).diceCost.includes(roll)) {
@@ -110,7 +124,19 @@ export function Battle({ initialState, onRestart }: BattleProps) {
         let targetCardId = "";
         let defeatedId: string | null = null;
         let gameOver = false;
+        let extraAction = false;
+        let blocked = false;
+        let statusEffectId: string | null = null;
         for (const event of result.events) {
+            if (event.kind === "extraAction") {
+                extraAction = true;
+            }
+            if (event.kind === "attackBlocked") {
+                blocked = true;
+            }
+            if (event.kind === "statusApplied") {
+                statusEffectId = event.effectId;
+            }
             if (event.kind === "damageDealt") {
                 damage = event.amount;
                 targetCardId = event.targetCardId;
@@ -125,15 +151,27 @@ export function Battle({ initialState, onRestart }: BattleProps) {
 
         // 1. Treffet: vis ny HP på forsvareren, rist kortet, sprett skadetallet
         const defender = state.players[defenderIndex];
+        const defenderName = getCard(defender.team[defender.activeIndex].cardId).name;
         const oldHp = defender.team[defender.activeIndex].currentHp;
         let shownHp = oldHp - damage;
         if (shownHp < 0) {
             shownHp = 0;
         }
         setState({ ...withActiveHp(state, defenderIndex, shownHp), lastRoll: null });
-        setHit({ cardId: targetCardId, amount: damage, key: Date.now() });
-        if (chosenAttack.effect !== undefined && damage === 0) {
-            say(`${attackerName} bruker ${chosenAttack.name}! (effekten kommer i neste versjon)`);
+        if (damage > 0) {
+            setHit({ cardId: targetCardId, amount: damage, key: Date.now() });
+        }
+
+        if (blocked) {
+            say(`${attackerName} prøver ${chosenAttack.name}, men klarer det ikke!`);
+        } else if (statusEffectId === "blind") {
+            setState(result.state);
+            say(`${attackerName} bruker ${chosenAttack.name}! ${defenderName} er blendet neste runde`);
+        } else if (statusEffectId === "pollen") {
+            setState(result.state);
+            say(`${attackerName} bruker ${chosenAttack.name}! ${defenderName} trenger en sekser neste runde`);
+        } else if (NOT_WORKING_YET.includes(attackId)) {
+            say(`${attackerName} bruker ${chosenAttack.name}! (virker ikke ennå)`);
         } else {
             say(`${attackerName} bruker ${chosenAttack.name}!`);
         }
@@ -153,6 +191,10 @@ export function Battle({ initialState, onRestart }: BattleProps) {
             setState(result.state);
             setWinner(attackerIndex);
             say(`${state.players[attackerIndex].name} vant!`);
+        } else if (extraAction) {
+            // Mind Infuse: samme spiller får kaste igjen, turen avsluttes ikke
+            setState(result.state);
+            say(`${attackerName} får angripe igjen! Kast terningen`);
         } else {
             const next = endTurn(result.state).state;
             setState(next);

@@ -332,6 +332,39 @@
     object-fit: cover;
 }
 
+/* Statuser (Blendet, Pollen) som lapper oppå bildet */
+.qc-statuses {
+    position: absolute;
+    top: 0.4em;
+    left: 0.4em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+}
+
+.qc-status {
+    font-family: "Patrick Hand SC", sans-serif;
+    font-size: 1.05em;
+    line-height: 1;
+    padding: 0.25em 0.6em 0.2em;
+    color: #fff;
+    background: var(--ink);
+    border: 0.12em solid var(--ink);
+    border-radius: 0.6em 0.8em 0.6em 0.7em;
+    box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.4);
+    animation: status-in 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.qc-status-pollen {
+    color: var(--ink);
+    background: #e8e36a;
+}
+
+.qc-not-working {
+    font-style: italic;
+    color: #9a2a1e;
+}
+
 /* Den lyse stripa under bildet, brukt som HP-bar */
 .qc-strip {
     position: relative;
@@ -823,6 +856,11 @@
             0 2.2em 3.5em rgba(0, 0, 0, 0.6),
             0 0 5em color-mix(in srgb, var(--body) 85%, transparent);
     }
+}
+
+@keyframes status-in {
+    from { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    to { transform: none; opacity: 1; }
 }
 
 @keyframes ready-glow {

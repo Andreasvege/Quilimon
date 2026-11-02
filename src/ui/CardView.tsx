@@ -1,12 +1,22 @@
 import { getCard } from "../game/cards";
 import { getAttack } from "../game/attacks";
 import type { InBattle } from "../game/gamestate";
+import { getAttackBlocker } from "../game/actions";
 import { cardImageUrl } from "./images";
 import { Dice } from "./Dice";
 import { TypeIcon } from "./TypeIcon";
 
 /** Kortene som ikke har SPESS-merket på originalene. */
 const CARDS_WITHOUT_SPESS = ["slepio", "magmo"];
+
+/** Angrep der effekten ikke er bygd ennå. Merkes med * på kortet. */
+export const NOT_WORKING_YET = ["grip", "mageckoGuard", "reflekt"];
+
+/** Teksten som vises på kortet når et monster har en status. */
+const STATUS_LABELS: Record<string, string> = {
+    blind: "Blendet",
+    pollen: "Pollen: trenger 6",
+};
 
 /** Treffet som skal animeres på kortet akkurat nå. `key` endres for hvert treff, så animasjonen starter på nytt. */
 export interface Hit {
@@ -73,6 +83,12 @@ export function QuilimonCard({ monster, lastRoll = null, canAct = false, onAttac
         if (canAct && lastRoll !== null && chosenAttack.diceCost.includes(lastRoll)) {
             canUse = true;
         }
+        // Blendet eller omtåket: angrepet lyser ikke opp, selv om terningen passer
+        if (lastRoll !== null && getAttackBlocker(monster, lastRoll) !== null) {
+            canUse = false;
+        }
+
+        const notWorking = NOT_WORKING_YET.includes(attackId);
 
         // SPESS står på det andre angrepet når det har et element (slik på originalene).
         // Slepio og Magmo har ikke merket på sine kort.
@@ -89,7 +105,12 @@ export function QuilimonCard({ monster, lastRoll = null, canAct = false, onAttac
         // Effektangrep har ingen skade, så kortet forklarer hva de gjør (som originalene)
         let effectText = null;
         if (chosenAttack.effect !== undefined) {
-            effectText = <span className="qc-effect">{chosenAttack.description}</span>;
+            effectText = (
+                <span className="qc-effect">
+                    {chosenAttack.description}
+                    {notWorking && <em className="qc-not-working"> * Virker ikke ennå.</em>}
+                </span>
+            );
         }
 
         // Mange enkeltterninger (som Fireball) får egen linje over navnet, slik som på originalen
@@ -102,7 +123,7 @@ export function QuilimonCard({ monster, lastRoll = null, canAct = false, onAttac
             <>
                 <span className="qc-a">A:</span>
                 <DiceCost cost={chosenAttack.diceCost} />
-                <span className="qc-attack-name">{chosenAttack.name}</span>
+                <span className="qc-attack-name">{chosenAttack.name}{notWorking && "*"}</span>
                 <span className="qc-damage">{damageText}</span>
                 {effectText}
             </>
@@ -127,6 +148,17 @@ export function QuilimonCard({ monster, lastRoll = null, canAct = false, onAttac
         );
     }
 
+    const statusChips = [];
+    for (const status of monster.statusEffects) {
+        let label = status.effectId;
+        if (STATUS_LABELS[status.effectId] !== undefined) {
+            label = STATUS_LABELS[status.effectId];
+        }
+        statusChips.push(
+            <span key={status.effectId} className={"qc-status qc-status-" + status.effectId}>{label}</span>
+        );
+    }
+
     let footer = <span className="qc-logo">Quilimon</span>;
     if (card.evolution !== null) {
         footer = (
@@ -147,6 +179,7 @@ export function QuilimonCard({ monster, lastRoll = null, canAct = false, onAttac
 
             <div className="qc-art">
                 <img src={cardImageUrl(card.image)} alt={card.name} draggable={false} />
+                {statusChips.length > 0 && <div className="qc-statuses">{statusChips}</div>}
             </div>
 
             {/* Den lyse stripa under bildet er HP-baren */}
