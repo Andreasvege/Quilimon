@@ -12,7 +12,7 @@ inn og brukt som kortgrafikk.
 Spillmotoren er kodet for hånd av meg, Andreas Hjorthaug Vege, både som en bursdagsgave til Jakob,
 og som et øvingsprosjekt for å kode mer for hånd (i en tid der det er litt for lite av nettopp det)
 
-![Startskjermen: de sju kortene vifter seg ut, og så deles det ut tre kort til hver spiller](docs/bilder/start.gif)](https://quilimon.vercel.app)
+[![Startskjermen: de sju kortene vifter seg ut, og så deles det ut tre kort til hver spiller](docs/bilder/start.gif)](https://quilimon.vercel.app)
 
 ## Slik spiller du
 
