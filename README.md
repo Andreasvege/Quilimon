@@ -1,11 +1,13 @@
 # Quilimon
 
-**Et legendarisk kortspill av Jakob Vege — nå digitalt.**
+**Et kortspill av Jakob Vege — nå digitalt.**
 
-Quilimon ble tegnet og funnet opp for hånd av Jakob da han var barn: sju monstre, tusj
-og fargeblyant, terninger og angrep. Dette prosjektet gjør kortene om til et spill du kan
+Quilimon ble tegnet og funnet opp for hånd av fetteren min Jakob, da vi var barn. For over 10 år siden fikk jeg syv kort fra samlingen hans,
+alle originale monstre tegnet med tusj og fargeblyant, terninger og angrep. Dette prosjektet gjør kortene om til et spill du kan
 spille i nettleseren, laget som bursdagsgave til Jakob. De originale tegningene er skannet
 inn og brukt som kortgrafikk.
+Spillmotoren er kodet for hånd av meg, Andreas Hjorthaug Vege, både som en bursdagsgave til Jakob,
+og som et øvingsprosjekt for å kode mer for hånd (i en tid der det er litt for lite av nettopp det)
 
 ![Startskjermen: de sju kortene vifter seg ut, og så deles det ut tre kort til hver spiller](docs/bilder/start.gif)
 
